@@ -92,15 +92,52 @@ namespace de4dot.code.deobfuscators.Dotfuscator {
 
 					int magicAdd = 0;
 					int j = i + 6;
+					/* 根据Dotfuscator("257420:1:0:4.39.0.8792", 0)特点修改-gagmeng */
+					/* IL_0000: ldarg.0 */
+					/* IL_0001: callvirt  instance char[] [mscorlib]System.String::ToCharArray() */
+					/* IL_0006: stloc.0 */
+					/* IL_0007: ldc.i4    951789305 */
+					/* IL_000C: ldarg.1 */
+					/* IL_000D: add */
+					/* IL_000E: ldc.i4    63 */
+					/* IL_0013: conv.i */
+					/* IL_0014: add */
+					/* IL_0015: ldc.i4    57 */
+					/* IL_001A: conv.i */
+					/* IL_001B: add */
+					/* IL_001C: ldc.i4    68 */
+					/* IL_0021: conv.i */
+					/* IL_0022: add */
+					/* IL_0023: ldc.i4    21 */
+					/* IL_0028: conv.i */
+					/* IL_0029: add */
+					/* IL_002A: ldc.i4    85 */
+					/* IL_002F: conv.i */
+					/* IL_0030: add */
+					/* IL_0031: stloc.1 */
+					bool ldcflg = false;
+					int ldcInstrsIdx = 0;
+					Instruction ldcOp = Instruction.Create(OpCodes.Ldc_I4_0);
+					Instruction addOp;
 					while (j < instrs.Count - 1 && !instrs[j].IsStloc()) {
-						var ldcOp = instrs[j];
-						var addOp = instrs[j + 1];
-						if (ldcOp.IsLdcI4() && addOp.OpCode == OpCodes.Add) {
-							magicAdd = magicAdd + ldcOp.GetLdcI4Value();
-							j = j + 2;
+						if (ldcflg == false) 
+						{
+							ldcOp = instrs[j];
+							if (ldcOp.IsLdcI4()) {
+								ldcInstrsIdx = j;
+								ldcflg = true;
+							}
 						}
-						else
-							j++;
+						if (ldcflg == true) {
+							addOp = instrs[j];
+							if (addOp.OpCode == OpCodes.Add) {
+								if(j <= ldcInstrsIdx + 2) {
+									magicAdd = magicAdd + ldcOp.GetLdcI4Value();
+									ldcflg = false;
+								}
+							}
+						}
+						j++;
 					}
 
 					var info = new StringDecrypterInfo(method, ldci4.GetLdcI4Value() + magicAdd);
